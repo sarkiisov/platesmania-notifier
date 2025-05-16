@@ -1,0 +1,8 @@
+name: "Platesmania Telegram notifier"
+branding:
+  icon: "send"
+  color: "grey-dark"
+inputs:
+runs:
+  using: "node22"
+  main: "dist/index.js"

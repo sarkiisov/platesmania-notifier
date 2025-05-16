@@ -1,0 +1,21 @@
+{
+  "name": "platesmania-notifier",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "telegraf": "^4.16.3"
+  }
+}
