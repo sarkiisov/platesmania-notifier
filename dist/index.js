@@ -43839,7 +43839,6 @@ const telegraf_1 = __nccwpck_require__(5879);
     const telegramChatId = (0, core_1.getInput)("telegram-chat-id");
     const githubToken = (0, core_1.getInput)("github-token");
     const bot = new telegraf_1.Telegraf(telegramBotToken);
-    // console.log(context);
     const octokit = (0, github_1.getOctokit)(githubToken);
     const runId = github_1.context.runId;
     const { owner, repo } = github_1.context.repo;
@@ -43848,9 +43847,35 @@ const telegraf_1 = __nccwpck_require__(5879);
         repo,
         run_id: runId,
     });
-    console.log("jobs", jobs);
+    const preparedJobs = jobs
+        .toSorted((a, b) => {
+        const dateA = new Date(a.completed_at).getTime();
+        const dateB = new Date(b.completed_at).getTime();
+        return dateA - dateB;
+    })
+        .map(({ name, status }) => ({
+        name,
+        status,
+    }));
     telegramChatId.split(",").forEach((id) => {
-        bot.telegram.sendMessage(id, "Hello from Telegram bot");
+        const fullRef = github_1.context.ref;
+        const branchName = fullRef.replace("refs/heads/", "");
+        const titleMessage = `Новое уведомление от [${repo}](https://github.com/${repo}) в ветке ${branchName}`;
+        const pipelineUrl = `https://github.com/${repo}/actions/runs/${runId}`;
+        const pipelineMessage = `[Посмотреть подробнее](${pipelineUrl})`;
+        const jobsMessage = preparedJobs
+            .map((job) => `${{
+            queued: "⏳ В очереди",
+            in_progress: "🔄 В процессе",
+            completed: "✅ Завершено",
+            waiting: "⏸️ Ожидает",
+        }[job.status]} – ${job.name}`)
+            .join("\n");
+        const message = bot.telegram.sendMessage(id, `
+      ${titleMessage}
+      ${jobsMessage}
+      ${pipelineMessage}
+      `, { parse_mode: "MarkdownV2" });
     });
 })();
 
