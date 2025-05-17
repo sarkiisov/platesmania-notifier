@@ -23,16 +23,16 @@ import { Telegraf } from "telegraf";
   });
 
   const preparedJobs = jobs
-    .filter((job) => job.status !== "in_progress")
+    .filter((job) => !!job.conclusion)
     .toSorted((a, b) => {
       const dateA = new Date(a.completed_at).getTime();
       const dateB = new Date(b.completed_at).getTime();
 
       return dateA - dateB;
     })
-    .map(({ name, status }) => ({
+    .map(({ name, conclusion }) => ({
       name,
-      status,
+      conclusion,
     }));
 
   telegramChatId.split(",").forEach((id) => {
@@ -52,7 +52,15 @@ import { Telegraf } from "telegraf";
               in_progress: "🔄 В процессе",
               completed: "✅ Завершено",
               waiting: "⏸️ Ожидает",
-            }[job.status]
+
+              success: "✅ Завершено",
+              failure: "❌ Ошибка",
+              neutral: "⚪ Нейтрально",
+              cancelled: "🚫 Отменено",
+              skipped: "⏭️ Пропущено",
+              timed_out: "⏰ Время ожидания истекло",
+              action_required: "⚠️ Требуется действие",
+            }[job.conclusion]
           } - ${job.name}`
       )
       .join("\n");

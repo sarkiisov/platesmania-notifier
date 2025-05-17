@@ -43848,15 +43848,15 @@ const telegraf_1 = __nccwpck_require__(5879);
         run_id: runId,
     });
     const preparedJobs = jobs
-        .filter((job) => job.status !== "in_progress")
+        .filter((job) => !!job.conclusion)
         .toSorted((a, b) => {
         const dateA = new Date(a.completed_at).getTime();
         const dateB = new Date(b.completed_at).getTime();
         return dateA - dateB;
     })
-        .map(({ name, status }) => ({
+        .map(({ name, conclusion }) => ({
         name,
-        status,
+        conclusion,
     }));
     telegramChatId.split(",").forEach((id) => {
         const fullRef = github_1.context.ref;
@@ -43870,10 +43870,16 @@ const telegraf_1 = __nccwpck_require__(5879);
             in_progress: "🔄 В процессе",
             completed: "✅ Завершено",
             waiting: "⏸️ Ожидает",
-        }[job.status]} - ${job.name}`)
+            success: "✅ Завершено",
+            failure: "❌ Ошибка",
+            neutral: "⚪ Нейтрально",
+            cancelled: "🚫 Отменено",
+            skipped: "⏭️ Пропущено",
+            timed_out: "⏰ Время ожидания истекло",
+            action_required: "⚠️ Требуется действие",
+        }[job.conclusion]} - ${job.name}`)
             .join("\n");
-        const message = bot.telegram.sendMessage(id, `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}
-      `.replace(/-/g, "\\-"), { parse_mode: "MarkdownV2" });
+        const message = bot.telegram.sendMessage(id, `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}`.replace(/-/g, "\\-"), { parse_mode: "MarkdownV2" });
     });
 })();
 
