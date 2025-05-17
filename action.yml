@@ -9,6 +9,9 @@ inputs:
   telegram-chat-id:
     description: "Telegram chat id"
     required: true
+  github-token:
+    description: "GitHub token"
+    required: true
 runs:
   using: "node20"
   main: "dist/index.js"

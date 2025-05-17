@@ -43834,13 +43834,48 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(7484);
 const github_1 = __nccwpck_require__(3228);
 const telegraf_1 = __nccwpck_require__(5879);
-const telegramBotToken = (0, core_1.getInput)("telegram-bot-token");
-const telegramChatId = (0, core_1.getInput)("telegram-chat-id");
-const bot = new telegraf_1.Telegraf(telegramBotToken);
-console.log(github_1.context);
-telegramChatId.split(",").forEach((id) => {
-    bot.telegram.sendMessage(id, "Hello from Telegram bot");
-});
+(async () => {
+    const telegramBotToken = (0, core_1.getInput)("telegram-bot-token");
+    const telegramChatId = (0, core_1.getInput)("telegram-chat-id");
+    const githubToken = (0, core_1.getInput)("github-token");
+    const bot = new telegraf_1.Telegraf(telegramBotToken);
+    const octokit = (0, github_1.getOctokit)(githubToken);
+    const runId = github_1.context.runId;
+    const { owner, repo } = github_1.context.repo;
+    const { data: { jobs }, } = await octokit.rest.actions.listJobsForWorkflowRun({
+        owner,
+        repo,
+        run_id: runId,
+    });
+    const preparedJobs = jobs
+        .filter((job) => !!job.conclusion)
+        .toSorted((a, b) => {
+        const dateA = new Date(a.completed_at).getTime();
+        const dateB = new Date(b.completed_at).getTime();
+        return dateA - dateB;
+    })
+        .map(({ name, conclusion }) => ({ name, conclusion }));
+    telegramChatId.split(",").forEach((id) => {
+        const fullRef = github_1.context.ref;
+        const branchName = fullRef.replace("refs/heads/", "");
+        const repoUrl = `https://github.com/${owner}/${repo}/tree/${branchName}`;
+        const titleMessage = `⚠️ Новое уведомление от [${repo}](${repoUrl}) в ветке \`${branchName}\``;
+        const pipelineUrl = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+        const pipelineMessage = `[Посмотреть подробнее](${pipelineUrl})`;
+        const jobsMessage = preparedJobs
+            .map((job) => `${{
+            success: "✅ Завершено",
+            failure: "❌ Ошибка",
+            neutral: "⚪ Нейтрально",
+            cancelled: "🚫 Отменено",
+            skipped: "⏭️ Пропущено",
+            timed_out: "⏰ Время ожидания истекло",
+            action_required: "⚠️ Требуется действие",
+        }[job.conclusion]} - \*\*${job.name}\*\*`)
+            .join("\n");
+        bot.telegram.sendMessage(id, `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}`.replace(/-/g, "\\-"), { parse_mode: "MarkdownV2" });
+    });
+})();
 
 })();
 
