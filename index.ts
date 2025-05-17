@@ -59,8 +59,10 @@ import { Telegraf } from "telegraf";
 
     const message = bot.telegram.sendMessage(
       id,
-      `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}
-      `.replace(/-/g, "\\-"),
+      `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}`.replace(
+        /-/g,
+        "\\-"
+      ),
       { parse_mode: "MarkdownV2" }
     );
   });
