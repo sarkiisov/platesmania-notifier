@@ -23,6 +23,7 @@ import { Telegraf } from "telegraf";
   });
 
   const preparedJobs = jobs
+    .filter((job) => job.status !== "in_progress")
     .toSorted((a, b) => {
       const dateA = new Date(a.completed_at).getTime();
       const dateB = new Date(b.completed_at).getTime();
@@ -37,9 +38,9 @@ import { Telegraf } from "telegraf";
   telegramChatId.split(",").forEach((id) => {
     const fullRef = context.ref;
     const branchName = fullRef.replace("refs/heads/", "");
-    const titleMessage = `Новое уведомление от [${repo}](https://github.com/${repo}) в ветке ${branchName}`;
+    const titleMessage = `⚠️ Новое уведомление от [${repo}](https://github.com/${owner}/${repo}) в ветке \`${branchName}\``;
 
-    const pipelineUrl = `https://github.com/${repo}/actions/runs/${runId}`;
+    const pipelineUrl = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
     const pipelineMessage = `[Посмотреть подробнее](${pipelineUrl})`;
 
     const jobsMessage = preparedJobs
@@ -58,10 +59,7 @@ import { Telegraf } from "telegraf";
 
     const message = bot.telegram.sendMessage(
       id,
-      `
-      ${titleMessage}
-      ${jobsMessage}
-      ${pipelineMessage}
+      `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}
       `.replace(/-/g, "\\-"),
       { parse_mode: "MarkdownV2" }
     );
