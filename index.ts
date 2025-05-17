@@ -9,8 +9,6 @@ import { Telegraf } from "telegraf";
 
   const bot = new Telegraf(telegramBotToken);
 
-  // console.log(context);
-
   const octokit = getOctokit(githubToken);
 
   const runId = context.runId;
@@ -24,9 +22,48 @@ import { Telegraf } from "telegraf";
     run_id: runId,
   });
 
-  console.log("jobs", jobs);
+  const preparedJobs = jobs
+    .toSorted((a, b) => {
+      const dateA = new Date(a.completed_at).getTime();
+      const dateB = new Date(b.completed_at).getTime();
+
+      return dateA - dateB;
+    })
+    .map(({ name, status }) => ({
+      name,
+      status,
+    }));
 
   telegramChatId.split(",").forEach((id) => {
-    bot.telegram.sendMessage(id, "Hello from Telegram bot");
+    const fullRef = context.ref;
+    const branchName = fullRef.replace("refs/heads/", "");
+    const titleMessage = `Новое уведомление от [${repo}](https://github.com/${repo}) в ветке ${branchName}`;
+
+    const pipelineUrl = `https://github.com/${repo}/actions/runs/${runId}`;
+    const pipelineMessage = `[Посмотреть подробнее](${pipelineUrl})`;
+
+    const jobsMessage = preparedJobs
+      .map(
+        (job) =>
+          `${
+            {
+              queued: "⏳ В очереди",
+              in_progress: "🔄 В процессе",
+              completed: "✅ Завершено",
+              waiting: "⏸️ Ожидает",
+            }[job.status]
+          } – ${job.name}`
+      )
+      .join("\n");
+
+    const message = bot.telegram.sendMessage(
+      id,
+      `
+      ${titleMessage}
+      ${jobsMessage}
+      ${pipelineMessage}
+      `,
+      { parse_mode: "MarkdownV2" }
+    );
   });
 })();
