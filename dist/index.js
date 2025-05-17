@@ -43869,7 +43869,7 @@ const telegraf_1 = __nccwpck_require__(5879);
             in_progress: "🔄 В процессе",
             completed: "✅ Завершено",
             waiting: "⏸️ Ожидает",
-        }[job.status]} – ${job.name}`)
+        }[job.status]} \\– ${job.name}`)
             .join("\n");
         const message = bot.telegram.sendMessage(id, `
       ${titleMessage}

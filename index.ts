@@ -52,7 +52,7 @@ import { Telegraf } from "telegraf";
               completed: "✅ Завершено",
               waiting: "⏸️ Ожидает",
             }[job.status]
-          } – ${job.name}`
+          } \\– ${job.name}`
       )
       .join("\n");
 
