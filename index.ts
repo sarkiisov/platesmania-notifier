@@ -30,15 +30,13 @@ import { Telegraf } from "telegraf";
 
       return dateA - dateB;
     })
-    .map(({ name, conclusion }) => ({
-      name,
-      conclusion,
-    }));
+    .map(({ name, conclusion }) => ({ name, conclusion }));
 
   telegramChatId.split(",").forEach((id) => {
     const fullRef = context.ref;
     const branchName = fullRef.replace("refs/heads/", "");
-    const titleMessage = `⚠️ Новое уведомление от [${repo}](https://github.com/${owner}/${repo}) в ветке \`${branchName}\``;
+    const repoUrl = `https://github.com/${owner}/${repo}/tree/${branchName}`;
+    const titleMessage = `⚠️ Новое уведомление от [${repo}](${repoUrl}) в ветке \`${branchName}\``;
 
     const pipelineUrl = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
     const pipelineMessage = `[Посмотреть подробнее](${pipelineUrl})`;
@@ -48,11 +46,6 @@ import { Telegraf } from "telegraf";
         (job) =>
           `${
             {
-              queued: "⏳ В очереди",
-              in_progress: "🔄 В процессе",
-              completed: "✅ Завершено",
-              waiting: "⏸️ Ожидает",
-
               success: "✅ Завершено",
               failure: "❌ Ошибка",
               neutral: "⚪ Нейтрально",
@@ -61,11 +54,11 @@ import { Telegraf } from "telegraf";
               timed_out: "⏰ Время ожидания истекло",
               action_required: "⚠️ Требуется действие",
             }[job.conclusion]
-          } - ${job.name}`
+          } - **${job.name}**`
       )
       .join("\n");
 
-    const message = bot.telegram.sendMessage(
+    bot.telegram.sendMessage(
       id,
       `${titleMessage}\n\n${jobsMessage}\n\n${pipelineMessage}`.replace(
         /-/g,
